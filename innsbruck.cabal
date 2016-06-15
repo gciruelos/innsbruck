@@ -29,13 +29,14 @@ library
 
 executable test
   exposed-modules:
-    PolynomialTest,
-    TestMain
+    Main,
+    PolynomialTest
   -- other-modules:       
   -- other-extensions:    
   build-depends:      
     base >=4.8 && <4.9,
-    hspec
+    hspec,
+    innsbruck
   hs-source-dirs:
     test
   main-is:

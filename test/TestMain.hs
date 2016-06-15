@@ -1,13 +1,15 @@
+module Main where
+
 import Test.Hspec
+
+import qualified PolynomialTest
 
 
 main :: IO ()
-main = hspec $ do
-  describe "Prelude.read" $ do
-    it "can parse integers" $ do
-      read "10" `shouldBe` (10 :: Int)
+main = hspec spec
 
-    it "can parse floating-point numbers" $ do
-      read "2.5" `shouldBe` (2.5 :: Float)
 
+spec :: Spec
+spec = do
+    describe "Polynomial" PolynomialTest.spec
 

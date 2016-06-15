@@ -4,7 +4,7 @@ innsbruck
     cabal sandbox init
     cabal install --only-dependencies
     cabal build
-    runhaskell test/TestMain.hs
+    ./dist/build/test/test
     echo "Do stuff..."
     cabal sandbox delete
 

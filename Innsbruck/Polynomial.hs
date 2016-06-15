@@ -187,26 +187,3 @@ div order p fs = div' order p_ fs_ (take s (repeat zeroPolynomial)) zeroPolynomi
                      p_ = sortTerms order p
                      s = length fs
 
-examplePoly :: Polynomial Int
-examplePoly = Polynomial 
-    [ Term (-5) [3, 0, 0]
-    , Term  7   [2, 0, 2]
-    , Term  4   [1, 2, 1]
-    , Term  4   [0, 0, 2]
-    ]
-
-exampleP :: Polynomial Float
-exampleP = Polynomial
-    [ Term 1 [2, 1]
-    , Term 1 [1, 2]
-    , Term 1 [0, 2]
-    ]
-
-exampleFs :: [Polynomial Float]
-exampleFs = [Polynomial [ Term 1 [1, 1]
-                        , Term (-1) [0, 0]
-                        ],
-             Polynomial [ Term 1 [0, 2]
-                        , Term (-1) [0, 0]
-                        ]]
-
