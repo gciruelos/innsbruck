@@ -52,7 +52,10 @@ grevlexAux as bs = revDiff as bs []
     revDiff (_:_) [] _ = error "Different length lists in grevlexAux."
 
 grevlexOrder :: MonomialOrdering
-grevlexOrder as bs = if null rightmostNonzero 
+grevlexOrder as bs | sum as > sum bs = GT
+                   | sum as < sum bs = LT
+                   | otherwise =
+                     if null rightmostNonzero 
                      then EQ
                      else if head rightmostNonzero < 0 then GT else LT
   where rightmostNonzero = dropWhile (== 0) (grevlexAux as bs)
@@ -75,14 +78,20 @@ leadingMonomial order f = Polynomial [Term 1 (multidegree order f)]
 sortTerms :: MonomialOrdering -> Polynomial k -> Polynomial k
 sortTerms order = Polynomial . (sortBy (\a b -> order (monomial b) (monomial a))) . terms
 
+negateTerm :: Num k => Term k -> Term k
+negateTerm t = Term (negate (coefficient t)) (monomial t)
+
+sortAndApply :: MonomialOrdering -> (Polynomial k -> Polynomial k -> a)
+            -> Polynomial k -> Polynomial k -> a
+sortAndApply order f p q = f (sortTerms order p) (sortTerms order q)
+
 
 {- Sorted sum functions. -}
 sortedSumTerm :: (Eq k, Num k) => MonomialOrdering -> Term k -> [Term k] -> [Term k]
 sortedSumTerm _     f []     = [f]
 sortedSumTerm order f (g:gs) = case order (monomial f) (monomial g) of
     EQ -> let c = (coefficient f) + (coefficient g)
-          in 
-              if c == 0 then gs else (Term c  (monomial g)) : gs
+          in if c == 0 then gs else (Term c (monomial g)) : gs
     GT -> f : g : gs
     LT -> g : (sortedSumTerm order f gs)
 
@@ -94,18 +103,20 @@ sortedSumTerms order (f:fs) gs = sortedSumTerms order fs (sortedSumTerm order f 
 sortedSum :: (Eq k,  Num k) => MonomialOrdering -> Polynomial k -> Polynomial k
           -> Polynomial k
 sortedSum order f g = Polynomial $ sortedSumTerms order (terms f) (terms g)
-{- END: Sorted sum functions. -}
 
-negateTerm :: Num k => Term k -> Term k
-negateTerm t = Term (negate (coefficient t)) (monomial t)
+sortedDifference :: (Eq k,  Num k) => MonomialOrdering -> Polynomial k -> Polynomial k
+                 -> Polynomial k
+sortedDifference order f g = Polynomial $
+    sortedSumTerms order (terms f) (map negateTerm (terms g))
+{- END: Sorted sum functions. -}
 
 dividesTerm :: Term k -> Term k -> Bool
 dividesTerm f g = all id (zipWith (<=) (monomial f) (monomial g))
 
 -- Can fail.
 -- Pre: f | g.
-divTerms :: Fractional k => Term k -> Term k -> Term k
-divTerms f g = Term ((coefficient f) / coefficient g) (zipWith (-) (monomial f) (monomial g))
+divTerm :: Fractional k => Term k -> Term k -> Term k
+divTerm f g = Term ((coefficient f) / coefficient g) (zipWith (-) (monomial f) (monomial g))
 
 prodTermPoly :: Num k => Term k -> Polynomial k -> Polynomial k
 prodTermPoly t f = Polynomial [Term (c * (coefficient term)) (addExponents (monomial term)) | term <- terms f]
@@ -141,7 +152,7 @@ divWhileDivisible order fi (p, qi) =
     then divWhileDivisible order fi
         (sortedSum order p (prodTermPoly (negateTerm lTR) fi), sortedSum order qi lTRatio)
     else (p, qi)
-      where lTR = divTerms (sortedLeadingTerm p) (sortedLeadingTerm fi)
+      where lTR = divTerm (sortedLeadingTerm p) (sortedLeadingTerm fi)
             lTRatio = Polynomial [lTR] 
 
 -- Inner loop.
@@ -154,7 +165,7 @@ divStep order p (fi:fs) (qi:qs) =
     if (sortedLeadingTerm fi) `dividesTerm` (sortedLeadingTerm p)
     then ((sortedSum order qi qiRatio):qs, (sortedSum order p pRatio))
     else (qi:(fst recursiveCall), (snd recursiveCall))
-      where lTR = divTerms (sortedLeadingTerm p) (sortedLeadingTerm fi)
+      where lTR = divTerm (sortedLeadingTerm p) (sortedLeadingTerm fi)
             qiRatio = Polynomial [lTR]
             pRatio = (prodTermPoly (negateTerm lTR) fi)
             recursiveCall = divStep order p fs qs
@@ -165,25 +176,22 @@ isZero = null . terms
 zeroPolynomial :: Polynomial k
 zeroPolynomial = Polynomial []
 
-div' :: (Eq k, Fractional k) => MonomialOrdering -> Polynomial k
-     -> [Polynomial k] -> [Polynomial k] -> Polynomial k
-     -> ([Polynomial k], Polynomial k)
-div' order p fs qs r = 
+divPoly' :: (Eq k, Fractional k) => MonomialOrdering -> Polynomial k
+         -> [Polynomial k] -> [Polynomial k] -> Polynomial k
+         -> ([Polynomial k], Polynomial k)
+divPoly' order p fs qs r = 
     if isZero p
     then (qs, r)
     else if terms p == terms pNext
-         then div' order (sortedSum order p minusPLT) fs qs (sortedSum order r truePLT)
-         else div' order  pNext fs qiNext r
+         then divPoly' order (sortedDifference order p pLT) fs qs (sortedSum order r pLT)
+         else divPoly' order  pNext fs qiNext r
     where (qiNext, pNext) = divStep order p fs qs
-          pLT = sortedLeadingTerm p
-          minusPLT = Polynomial [negateTerm pLT]
-          truePLT = Polynomial [pLT]
+          pLT = Polynomial [sortedLeadingTerm p]
 
-
-div :: (Eq k, Fractional k) => MonomialOrdering -> Polynomial k -> [Polynomial k]
-    -> ([Polynomial k], Polynomial k)
-div order p fs = div' order p_ fs_ (take s (repeat zeroPolynomial)) zeroPolynomial
-               where fs_ = map (sortTerms order) fs
-                     p_ = sortTerms order p
-                     s = length fs
+divPoly :: (Eq k, Fractional k) => MonomialOrdering -> Polynomial k -> [Polynomial k]
+        -> ([Polynomial k], Polynomial k)
+divPoly order p fs = divPoly' order p_ fs_ (take s (repeat zeroPolynomial)) zeroPolynomial
+                   where fs_ = map (sortTerms order) fs
+                         p_ = sortTerms order p
+                         s = length fs
 
