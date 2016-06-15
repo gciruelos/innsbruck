@@ -1,0 +1,47 @@
+name:                haxl
+version:             0.0.1
+synopsis:            A Haskell
+homepage:            https://github.com/gciruelos/innsbruck
+bug-reports:         https://github.com/gciruelos/innsbruck/issues
+license:             MIT
+license-file:        LICENSE
+author:              Gonzalo Ciruelos
+maintainer:          Gonzalo Ciruelos <gonzalo.ciruelos@gmail.com>
+copyright:           Copyright (c) 2016-present, Gonzalo Ciruelos.
+stability:           alpha
+cabal-version:       >= 1.10
+
+
+library
+
+  build-depends:
+    base
+
+  exposed-modules:
+    Innsbruck.Polynomial
+
+  ghc-options:
+    -Wall
+    -fno-warn-name-shadowing
+
+
+
+test-suite test
+  build-depends:
+    hspec,,
+    base
+
+  ghc-options:
+    -Wall
+    -fno-warn-name-shadowing
+    -fno-warn-missing-signatures
+
+  hs-source-dirs:
+    tests
+
+  main-is:
+    TestMain.hs
+
+  other-modules:
+    PolynomialTest
+
