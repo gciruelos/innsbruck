@@ -118,8 +118,8 @@ dividesTerm f g = all id (zipWith (<=) (monomial f) (monomial g))
 divTerm :: Fractional k => Term k -> Term k -> Term k
 divTerm f g = Term ((coefficient f) / coefficient g) (zipWith (-) (monomial f) (monomial g))
 
-prodTermPoly :: Num k => Term k -> Polynomial k -> Polynomial k
-prodTermPoly t f = Polynomial [Term (c * (coefficient term)) (addExponents (monomial term)) | term <- terms f]
+multTermPoly :: Num k => Term k -> Polynomial k -> Polynomial k
+multTermPoly t f = Polynomial [Term (c * (coefficient term)) (addExponents (monomial term)) | term <- terms f]
                  where c = coefficient t
                        addExponents = zipWith (+) (monomial t)
 
@@ -150,7 +150,7 @@ divWhileDivisible :: (Eq k, Fractional k) => MonomialOrdering -> Polynomial k
 divWhileDivisible order fi (p, qi) = 
     if (sortedLeadingTerm fi) `dividesTerm` (sortedLeadingTerm p)
     then divWhileDivisible order fi
-        (sortedSum order p (prodTermPoly (negateTerm lTR) fi), sortedSum order qi lTRatio)
+        (sortedSum order p (multTermPoly (negateTerm lTR) fi), sortedSum order qi lTRatio)
     else (p, qi)
       where lTR = divTerm (sortedLeadingTerm p) (sortedLeadingTerm fi)
             lTRatio = Polynomial [lTR] 
@@ -167,7 +167,7 @@ divStep order p (fi:fs) (qi:qs) =
     else (qi:(fst recursiveCall), (snd recursiveCall))
       where lTR = divTerm (sortedLeadingTerm p) (sortedLeadingTerm fi)
             qiRatio = Polynomial [lTR]
-            pRatio = (prodTermPoly (negateTerm lTR) fi)
+            pRatio = (multTermPoly (negateTerm lTR) fi)
             recursiveCall = divStep order p fs qs
                            
 isZero :: Polynomial k -> Bool
@@ -188,9 +188,9 @@ divPoly' order p fs qs r =
     where (qiNext, pNext) = divStep order p fs qs
           pLT = Polynomial [sortedLeadingTerm p]
 
-divPoly :: (Eq k, Fractional k) => MonomialOrdering -> Polynomial k -> [Polynomial k]
+divPoly :: (Eq k, Fractional k) => MonomialOrdering -> [Polynomial k] -> Polynomial k
         -> ([Polynomial k], Polynomial k)
-divPoly order p fs = divPoly' order p_ fs_ (take s (repeat zeroPolynomial)) zeroPolynomial
+divPoly order fs p = divPoly' order p_ fs_ (take s (repeat zeroPolynomial)) zeroPolynomial
                    where fs_ = map (sortTerms order) fs
                          p_ = sortTerms order p
                          s = length fs
