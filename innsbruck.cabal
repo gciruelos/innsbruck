@@ -19,6 +19,7 @@ cabal-version:       >=1.10
 library
   exposed-modules:    
     Innsbruck.Polynomial
+    Innsbruck.Groebner
   -- other-modules:       
   -- other-extensions:    
   build-depends:
@@ -31,6 +32,7 @@ executable test
   exposed-modules:
     Main,
     PolynomialTest
+    GroebnerTest
   -- other-modules:       
   -- other-extensions:    
   build-depends:      

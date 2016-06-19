@@ -36,7 +36,7 @@ spec =  do
       (leadingMonomial lexOrder examplePoly) `shouldSatisfy` 
           (equalTerms (Polynomial [Term 1 [3,0,0]]))
       (leadingTerm lexOrder examplePoly) `shouldBe` (Term (-5) [3,0,0])
-      (divPoly lexOrder exampleP exampleFs) `shouldBe` 
+      (divPoly lexOrder exampleFs exampleP) `shouldBe` 
                   ([Polynomial [Term 1 [1,0], Term 1 [0,1]],
                     Polynomial [Term 1 [0,0]]],
                                   Polynomial [Term 1 [1,0],
@@ -67,6 +67,4 @@ exampleFs = [Polynomial [ Term 1 [1, 1]
              Polynomial [ Term 1 [0, 2]
                         , Term (-1) [0, 0]
                         ]]
-
-
 
